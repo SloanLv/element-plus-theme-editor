@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
-import { getDefaultTheme, generateColorVars } from '../theme/variables'
+import { getDefaultTheme, getDefaultDarkTheme, generateColorVars } from '../theme/variables'
 import type { ThemeVars } from '../theme/variables'
+import { useDarkMode } from './useDarkMode'
 
 /** 主题 JSON 导入数据结构 */
 interface ThemeImportData {
@@ -20,21 +21,32 @@ export interface UseThemeReturn {
   commit: () => void
   canUndo: () => boolean
   canRedo: () => boolean
+  switchThemeMode: () => void
 }
 
 /**
  * 主题状态管理（单例 composable）
  * 所有组件共享同一份响应式主题数据
+ *
+ * 主题变量仅应用到预览区（.preview-panel），而非 :root，
+ * 这样编辑器 UI 可以独立使用 Element Plus 内置的浅色/深色模式。
  */
 const themeVars = reactive<ThemeVars>(getDefaultTheme())
 const history: ThemeVars[] = []
 let historyIndex = -1
 
-/** 将主题变量应用到 :root */
+/** 将主题变量应用到预览区元素（.preview-panel），回退到 :root */
 function applyTheme(): void {
   const root = document.documentElement
+  const target = document.querySelector<HTMLElement>('.preview-panel') || root
+  // 若目标不是 :root，先清除 :root 上的内联变量，确保编辑器 UI 使用 Element Plus 默认/深色变量
+  if (target !== root) {
+    for (const key of Object.keys(themeVars)) {
+      root.style.removeProperty(key)
+    }
+  }
   for (const [key, value] of Object.entries(themeVars)) {
-    root.style.setProperty(key, value)
+    target.style.setProperty(key, value)
   }
 }
 
@@ -55,22 +67,24 @@ function pushHistory(): void {
 pushHistory()
 
 export function useTheme(): UseThemeReturn {
+  const { isDark } = useDarkMode()
+
   /** 更新单个变量 */
   function setVar(key: string, value: string): void {
     themeVars[key] = value
     applyTheme()
   }
 
-  /** 更新主色（含自动生成的变体） */
+  /** 更新主色（含自动生成的变体，深色模式下变体方向反转） */
   function setPrimaryColor(colorKey: string, baseColor: string): void {
-    const vars = generateColorVars(colorKey, baseColor)
+    const vars = generateColorVars(colorKey, baseColor, isDark.value)
     Object.assign(themeVars, vars)
     applyTheme()
   }
 
-  /** 重置为默认主题 */
+  /** 重置为默认主题（根据当前深色/浅色模式选择对应默认值） */
   function resetTheme(): void {
-    const def = getDefaultTheme()
+    const def = isDark.value ? getDefaultDarkTheme() : getDefaultTheme()
     Object.keys(themeVars).forEach((k) => delete themeVars[k])
     Object.assign(themeVars, def)
     applyTheme()
@@ -111,6 +125,17 @@ export function useTheme(): UseThemeReturn {
     pushHistory()
   }
 
+  /** 切换深色/浅色模式时重置预览区主题为对应默认值，并清空历史 */
+  function switchThemeMode(): void {
+    const def = isDark.value ? getDefaultDarkTheme() : getDefaultTheme()
+    Object.keys(themeVars).forEach((k) => delete themeVars[k])
+    Object.assign(themeVars, def)
+    applyTheme()
+    // 清空历史，以新模式默认值为起点
+    history.splice(0, history.length)
+    pushHistory()
+  }
+
   const canUndo = (): boolean => historyIndex > 0
   const canRedo = (): boolean => historyIndex < history.length - 1
 
@@ -124,6 +149,7 @@ export function useTheme(): UseThemeReturn {
     importTheme,
     commit,
     canUndo,
-    canRedo
+    canRedo,
+    switchThemeMode
   }
 }

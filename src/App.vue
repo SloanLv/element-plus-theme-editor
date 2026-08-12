@@ -17,6 +17,10 @@
 
         <el-divider direction="vertical" />
 
+        <el-tooltip :content="isDark ? '切换到浅色模式' : '切换到深色模式'" placement="bottom">
+          <el-button :icon="isDark ? Sunny : Moon" circle @click="toggleDark($event)" />
+        </el-tooltip>
+
         <el-tooltip content="重置为默认主题" placement="bottom">
           <el-button :icon="RefreshLeft" @click="onReset">重置</el-button>
         </el-tooltip>
@@ -56,14 +60,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineAsyncComponent } from 'vue'
+import { ref, defineAsyncComponent, onMounted, watch } from 'vue'
 import {
   Brush,
   Back,
   Right,
   RefreshLeft,
   Upload,
-  Download
+  Download,
+  Sunny,
+  Moon
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ThemePanel from './components/ThemePanel.vue'
@@ -71,8 +77,20 @@ import PreviewPanel from './components/PreviewPanel.vue'
 // 异步加载导出对话框，仅在用户点击导出时才加载
 const ExportDialog = defineAsyncComponent(() => import('./components/ExportDialog.vue'))
 import { useTheme } from './composables/useTheme'
+import { useDarkMode } from './composables/useDarkMode'
 
-const { resetTheme, undo, redo, importTheme, canUndo, canRedo } = useTheme()
+const { resetTheme, undo, redo, importTheme, canUndo, canRedo, switchThemeMode } = useTheme()
+const { isDark, toggleDark } = useDarkMode()
+
+// 组件挂载后根据当前深色/浅色模式初始化预览区主题
+onMounted(() => {
+  switchThemeMode()
+})
+
+// 深色模式切换时，同步重置预览区主题为对应模式的默认值
+watch(isDark, () => {
+  switchThemeMode()
+}, { flush: 'sync' })
 
 const exportVisible = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)

@@ -121,14 +121,18 @@ export const lightLevels: ColorLevel[] = [
 ]
 export const darkLevels: ColorLevel[] = [{ level: 2, percent: 0.2 }]
 
-/** 根据基础色生成所有 CSS 变量键值对 */
-export function generateColorVars(baseKey: string, baseColor: string): ThemeVars {
+/** 根据基础色生成所有 CSS 变量键值对
+ * @param isDark 深色模式下 light-* 变体与黑色混合，dark-2 变体与白色混合（与浅色模式相反）
+ */
+export function generateColorVars(baseKey: string, baseColor: string, isDark = false): ThemeVars {
   const vars: ThemeVars = { [`--el-color-${baseKey}`]: baseColor }
+  const lightMix = isDark ? '#000000' : '#ffffff'
+  const darkMix = isDark ? '#ffffff' : '#000000'
   for (const { level, percent } of lightLevels) {
-    vars[`--el-color-${baseKey}-light-${level}`] = mixColor(baseColor, percent)
+    vars[`--el-color-${baseKey}-light-${level}`] = mixColor(baseColor, percent, lightMix)
   }
   for (const { level, percent } of darkLevels) {
-    vars[`--el-color-${baseKey}-dark-${level}`] = mixColor(baseColor, percent, '#000000')
+    vars[`--el-color-${baseKey}-dark-${level}`] = mixColor(baseColor, percent, darkMix)
   }
   return vars
 }
@@ -222,6 +226,128 @@ export function getDefaultTheme(): ThemeVars {
   for (const v of radiusVars) theme[v.key] = v.value
   for (const v of fontSizeVars) theme[v.key] = v.value
   for (const v of boxShadowVars) theme[v.key] = v.value
+  for (const v of transitionVars) theme[v.key] = v.value
+  return theme
+}
+
+// ===== 深色模式默认值 =====
+
+/** 深色模式主色变体预计算值（来自 Element Plus dark/css-vars.css） */
+const darkColorVariants: Record<string, ThemeVars> = {
+  primary: {
+    '--el-color-primary': '#409eff',
+    '--el-color-primary-light-3': '#3375b9',
+    '--el-color-primary-light-5': '#2a598a',
+    '--el-color-primary-light-7': '#213d5b',
+    '--el-color-primary-light-8': '#1d3043',
+    '--el-color-primary-light-9': '#18222b',
+    '--el-color-primary-dark-2': '#66b1ff'
+  },
+  success: {
+    '--el-color-success': '#67c23a',
+    '--el-color-success-light-3': '#4e8e2f',
+    '--el-color-success-light-5': '#3e6b27',
+    '--el-color-success-light-7': '#2d481f',
+    '--el-color-success-light-8': '#25371c',
+    '--el-color-success-light-9': '#1c2518',
+    '--el-color-success-dark-2': '#85ce61'
+  },
+  warning: {
+    '--el-color-warning': '#e6a23c',
+    '--el-color-warning-light-3': '#a77730',
+    '--el-color-warning-light-5': '#7d5b28',
+    '--el-color-warning-light-7': '#533f20',
+    '--el-color-warning-light-8': '#3e301c',
+    '--el-color-warning-light-9': '#292218',
+    '--el-color-warning-dark-2': '#ebb563'
+  },
+  danger: {
+    '--el-color-danger': '#f56c6c',
+    '--el-color-danger-light-3': '#b25252',
+    '--el-color-danger-light-5': '#854040',
+    '--el-color-danger-light-7': '#582e2e',
+    '--el-color-danger-light-8': '#412626',
+    '--el-color-danger-light-9': '#2a1d1d',
+    '--el-color-danger-dark-2': '#f78989'
+  },
+  error: {
+    '--el-color-error': '#f56c6c',
+    '--el-color-error-light-3': '#b25252',
+    '--el-color-error-light-5': '#854040',
+    '--el-color-error-light-7': '#582e2e',
+    '--el-color-error-light-8': '#412626',
+    '--el-color-error-light-9': '#2a1d1d',
+    '--el-color-error-dark-2': '#f78989'
+  },
+  info: {
+    '--el-color-info': '#909399',
+    '--el-color-info-light-3': '#6b6d71',
+    '--el-color-info-light-5': '#525457',
+    '--el-color-info-light-7': '#393a3c',
+    '--el-color-info-light-8': '#2d2d2f',
+    '--el-color-info-light-9': '#202121',
+    '--el-color-info-dark-2': '#a6a9ad'
+  }
+}
+
+/** 深色模式文本颜色默认值 */
+const darkTextColorVars: ThemeVars = {
+  '--el-text-color-primary': '#e5eaf3',
+  '--el-text-color-regular': '#cfd3dc',
+  '--el-text-color-secondary': '#a3a6ad',
+  '--el-text-color-placeholder': '#8d9095',
+  '--el-text-color-disabled': '#6c6e72'
+}
+
+/** 深色模式边框颜色默认值 */
+const darkBorderColorVars: ThemeVars = {
+  '--el-border-color': '#4c4d4f',
+  '--el-border-color-light': '#414243',
+  '--el-border-color-lighter': '#363637',
+  '--el-border-color-extra-light': '#2b2b2c',
+  '--el-border-color-dark': '#58585b',
+  '--el-border-color-darker': '#636466'
+}
+
+/** 深色模式填充颜色默认值 */
+const darkFillColorVars: ThemeVars = {
+  '--el-fill-color': '#303030',
+  '--el-fill-color-light': '#262727',
+  '--el-fill-color-lighter': '#1d1d1d',
+  '--el-fill-color-extra-light': '#191919',
+  '--el-fill-color-dark': '#39393a',
+  '--el-fill-color-darker': '#424243',
+  '--el-fill-color-blank': '#141414'
+}
+
+/** 深色模式背景颜色默认值 */
+const darkBgColorVars: ThemeVars = {
+  '--el-bg-color': '#141414',
+  '--el-bg-color-page': '#0a0a0a',
+  '--el-bg-color-overlay': '#1d1e1f'
+}
+
+/** 深色模式阴影默认值 */
+const darkBoxShadowVars: ThemeVars = {
+  '--el-box-shadow': '0px 12px 32px 4px rgba(0,0,0,.36), 0px 8px 20px rgba(0,0,0,.72)',
+  '--el-box-shadow-light': '0px 0px 12px rgba(0,0,0,.72)',
+  '--el-box-shadow-lighter': '0px 0px 6px rgba(0,0,0,.72)',
+  '--el-box-shadow-dark': '0px 16px 48px 16px rgba(0,0,0,.72), 0px 12px 32px #000, 0px 8px 16px -8px #000'
+}
+
+/** 生成完整的深色模式默认主题变量对象 */
+export function getDefaultDarkTheme(): ThemeVars {
+  const theme: ThemeVars = {}
+  // 主色及其变体（使用 Element Plus 预计算值）
+  for (const c of primaryColors) {
+    Object.assign(theme, darkColorVariants[c.key])
+  }
+  // 其他分组
+  Object.assign(theme, darkTextColorVars, darkBorderColorVars, darkFillColorVars, darkBgColorVars)
+  // 圆角、字体、过渡与浅色模式相同
+  for (const v of radiusVars) theme[v.key] = v.value
+  for (const v of fontSizeVars) theme[v.key] = v.value
+  Object.assign(theme, darkBoxShadowVars)
   for (const v of transitionVars) theme[v.key] = v.value
   return theme
 }

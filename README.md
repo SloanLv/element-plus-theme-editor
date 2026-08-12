@@ -1,6 +1,6 @@
 # Element Plus 主题编辑器
 
-一个基于 Vue 3 + TypeScript + Vite + Element Plus 的**主题在线编辑器**，支持实时编辑 Element Plus 的 CSS 变量并导出主题文件。
+一个基于 Vue 3 + TypeScript + Vite + Element Plus 的**主题在线编辑器**，支持实时编辑 Element Plus 的 CSS 变量并导出主题文件，内置深色/浅色模式切换。
 
 ## 功能特性
 
@@ -8,6 +8,11 @@
 - **完整变量覆盖**：支持主题色、文字、边框、填充、背景、圆角、字体、阴影、过渡动画等 9 大分组
 - **主色变体自动生成**：编辑基础色后，自动计算 light-3 ~ light-9 和 dark-2 变体
 - **多格式颜色支持**：颜色混合算法兼容 `#hex`、`rgb()`、`rgba()` 三种格式
+- **深色 / 浅色模式切换**：
+  - 一键切换编辑器 UI 和预览区的深色（`#141414`）/ 浅色（`#fff`）主题
+  - 深色模式下默认主题自动使用 Element Plus 官方深色变量值
+  - 主色变体在深色模式下自动反转混合方向（light-* 与黑色混合，dark-2 与白色混合）
+  - 主题偏好通过 `localStorage` 持久化，刷新页面自动恢复
 - **实时组件预览**：内置按钮、标签、输入框、表格、分页等十余种组件的实时预览
 - **撤销 / 重做**：支持操作历史回退（最多 50 步）
 - **导入 / 导出**：
@@ -38,8 +43,21 @@ npm run build
 
 1. 在左侧编辑面板选择分组（主题色、文字、边框等）
 2. 修改颜色或数值，右侧预览区实时反映变化
-3. 满意后点击右上角「导出主题」
-4. 选择格式（CSS / SCSS / JSON），可预览代码或直接下载
+3. 点击工具栏太阳/月亮图标切换深色/浅色模式，编辑器和预览区同步切换
+4. 满意后点击右上角「导出主题」
+5. 选择格式（CSS / SCSS / JSON），可预览代码或直接下载
+
+### 深色 / 浅色模式
+
+| 操作 | 效果 |
+|------|------|
+| 点击工具栏太阳/月亮图标 | 编辑器 UI 与预览区同步切换深色/浅色主题 |
+| 切换模式时 | 预览区主题自动重置为对应模式的默认值，撤销历史清空 |
+| 深色模式下编辑主色 | 变体自动按深色规则生成（light-* 更暗，dark-2 更亮） |
+| 深色模式下点击「重置」| 重置为深色模式默认主题（非浅色默认值） |
+| 刷新页面 | 自动恢复上次的模式偏好（localStorage 持久化） |
+
+**架构设计**：编辑器 UI 使用 Element Plus 内置深色模式（`html.dark` 类），预览区主题变量独立作用于 `.preview-panel` 元素，两者互不干扰。切换模式时预览区重置为对应模式的默认主题值。
 
 ## 在项目中应用导出的主题
 
@@ -73,7 +91,7 @@ CSS 变量会自动覆盖 Element Plus 默认主题，无需重新编译。
 - Vue 3.4+（Composition API + `<script setup lang="ts">`）
 - TypeScript 5.4+（strict 模式）
 - Vite 5
-- Element Plus 2.7+
+- Element Plus 2.7+（含内置深色模式 CSS）
 - @element-plus/icons-vue
 - vue-tsc（Vue SFC 类型检查）
 
@@ -96,21 +114,22 @@ CSS 变量会自动覆盖 Element Plus 默认主题，无需重新编译。
 
 ```
 src/
-├── main.ts                  # 应用入口
-├── App.vue                  # 主布局（工具栏 + 编辑区 + 预览区）
+├── main.ts                  # 应用入口（引入 Element Plus + 深色模式 CSS）
+├── App.vue                  # 主布局（工具栏 + 编辑区 + 预览区 + 深色切换）
 ├── env.d.ts                 # TypeScript 环境声明（Vite / Vue SFC）
 ├── components/
 │   ├── ThemePanel.vue       # 主题编辑面板（颜色/滑块控件）
-│   ├── PreviewPanel.vue     # 组件实时预览面板
+│   ├── PreviewPanel.vue     # 组件实时预览面板（背景跟随深色模式）
 │   └── ExportDialog.vue     # 导出对话框
 ├── composables/
-│   └── useTheme.ts          # 主题状态管理（应用变量/撤销重做/导入）
+│   ├── useTheme.ts          # 主题状态管理（应用变量/撤销重做/导入/模式切换）
+│   └── useDarkMode.ts       # 深色模式状态管理（localStorage 持久化）
 ├── theme/
-│   └── variables.ts         # 变量定义、类型接口、颜色混合算法
+│   └── variables.ts         # 变量定义、类型接口、颜色混合算法、深色默认值
 ├── utils/
 │   └── export.ts            # 导出工具（CSS/SCSS/JSON 生成与下载）
 └── styles/
-    └── global.css           # 全局样式
+    └── global.css           # 全局样式（含深色模式适配）
 ```
 
 ## 可用脚本

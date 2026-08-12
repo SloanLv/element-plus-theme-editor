@@ -248,7 +248,7 @@ function onTextChange(key: string, val: string): void {
 
 /* ===== 左侧导航栏整体 ===== */
 .group-tabs :deep(.el-tabs__header) {
-  width: 130px;
+  width: 160px;
   margin: 0;
   border-right: 1px solid var(--el-border-color-lighter);
   background: var(--el-fill-color-lighter);

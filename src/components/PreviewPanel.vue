@@ -184,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import {
   Search,
   Edit,
@@ -192,8 +192,16 @@ import {
   Bell,
   UserFilled
 } from '@element-plus/icons-vue'
+import { useDarkMode } from '../composables/useDarkMode'
 
-const previewBg = ref<string>('light')
+const { isDark } = useDarkMode()
+
+// 预览背景跟随编辑器深色/浅色模式
+const previewBg = ref<string>(isDark.value ? 'dark' : 'light')
+watch(isDark, (dark) => {
+  previewBg.value = dark ? 'dark' : 'light'
+})
+
 const inputVal = ref<string>('')
 const numVal = ref<number>(1)
 const switchVal = ref<boolean>(true)

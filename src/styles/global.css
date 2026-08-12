@@ -15,11 +15,24 @@ body {
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background-color: #ffffff;
+  color: #303133;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 #app {
   display: flex;
   flex-direction: column;
+}
+
+/* ===== 深色模式 ===== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #141414;
+  color: #e5eaf3;
 }
 
 /* 自定义滚动条 */
@@ -41,4 +54,32 @@ body {
 /* 颜色选择器输入框样式微调 */
 .el-color-picker {
   vertical-align: middle;
+}
+
+/* ===== 深色模式下的编辑器 UI 适配 ===== */
+
+/* 颜色变体预览中的标签文字（硬编码颜色需在深色模式下覆盖） */
+html.dark .swatch .swatch-label {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* ===== 主题切换圆形扩散动画（View Transitions API） ===== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* 禁用深色模式下的默认过渡，避免与圆形动画冲突 */
+html.dark body {
+  transition: none;
 }
